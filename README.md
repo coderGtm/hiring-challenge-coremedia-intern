@@ -27,3 +27,7 @@ Your solution will be evaluated based on the following criteria (in this order):
 - Explanation of the solution and trade-offs
 - Bytes allocated per iteration
 - Number of allocations per iteration
+
+## Hints
+- Maybe use a kernel thats well documented? Linux perhaps?
+- Maybe use latest technologies? iouring? eBPF? sendmmmsg?
