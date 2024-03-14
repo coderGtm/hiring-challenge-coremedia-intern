@@ -185,15 +185,6 @@ func BenchmarkSample(b *testing.B) {
 	b.StopTimer()
 
 	// Do something here
-	testPort := 40101
-	// Create a udp network connection
-	conn, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   net.IPv4(127, 0, 0, 1),
-		Port: testPort,
-	})
-	if err != nil {
-		b.Fatal(err)
-	}
 
 	ports, readChan, closeChan, err := testInit(readersCount, false) // DO NOT EDIT THIS LINE
 	if err != nil {
@@ -211,10 +202,15 @@ func BenchmarkSample(b *testing.B) {
 				defer wg.Done()
 				buf := getTestMsg() // DO NOT EDIT THIS LINE
 				// DO Something with the buf to write it to the port 'i'
-				_, err := conn.WriteTo(buf, &net.UDPAddr{
-					IP:   net.IPv4(127, 0, 0, 1),
-					Port: ports[i],
-				})
+				addr := syscall.SockaddrInet4{Port: ports[i], Addr: [4]byte{127, 0, 0, 1}}
+				fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
+				if err != nil {
+					b.Fatal(err)
+				}
+
+				defer syscall.Close(fd)
+
+				err = syscall.Sendto(fd, buf, 0, &addr)
 				if err != nil {
 					b.Fatal(err)
 				}
