@@ -185,6 +185,15 @@ func BenchmarkSample(b *testing.B) {
 	b.StopTimer()
 
 	// Do something here
+	testPort := 40101
+	// Create a udp network connection
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{
+		IP:   net.IPv4(127, 0, 0, 1),
+		Port: testPort,
+	})
+	if err != nil {
+		b.Fatal(err)
+	}
 
 	ports, readChan, closeChan, err := testInit(readersCount, false) // DO NOT EDIT THIS LINE
 	if err != nil {
@@ -195,12 +204,21 @@ func BenchmarkSample(b *testing.B) {
 	writer := func() {
 		// You can modify the following code inside this function
 		// Start of code that you are permitted to modify
+		var wg sync.WaitGroup
 		for i := 0; i < readersCount; i++ {
-			buf := getTestMsg() // DO NOT EDIT THIS LINE
-
-			// DO Something with the buf to write it to the port 'i'
-			_ = ports[i] // Placeholder, Please remove this line
-			_ = buf      // Placeholder, Please remove this line
+			wg.Add(1)
+			go func(port int) {
+				defer wg.Done()
+				buf := getTestMsg() // DO NOT EDIT THIS LINE
+				// DO Something with the buf to write it to the port 'i'
+				_, err := conn.WriteTo(buf, &net.UDPAddr{
+					IP:   net.IPv4(127, 0, 0, 1),
+					Port: ports[i],
+				})
+				if err != nil {
+					b.Fatal(err)
+				}
+			}(ports[i])
 		}
 
 		// End of code that you are permitted to modify
